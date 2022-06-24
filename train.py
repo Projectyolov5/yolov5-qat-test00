@@ -567,6 +567,14 @@ def main(opt, callbacks=Callbacks()):
             LOGGER.info('Destroying process group... ')
             dist.destroy_process_group()
 
+
+    # 여기서부터 Quantization Aware Training
+    # EPOCH 1로 줬을때도 모델 저장 잘되는지 확인먼저 하기
+
+
+
+
+
     # Evolve hyperparameters (optional)
     else:
         # Hyperparameter evolution metadata (mutation scale 0-1, lower_limit, upper_limit)
