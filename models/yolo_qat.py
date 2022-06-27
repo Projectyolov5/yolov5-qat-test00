@@ -167,7 +167,7 @@ class QuantModel(nn.Module):
             try:
                 print(x.dtype)
             except:
-                print(x[0].dtype, x[1].dtype, x[2].dtype, x[3].dtype)
+                print(x[0].dtype)
             x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
