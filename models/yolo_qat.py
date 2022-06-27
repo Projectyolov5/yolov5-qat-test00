@@ -166,12 +166,12 @@ class QuantModel(nn.Module):
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
-        print(x)
+        # print(x)
         x[0] = self.dequant(x[0])
         x[1] = self.dequant(x[2])
         x[2] = self.dequant(x[2])
         x[3] = self.dequant(x[3])
-        print(x)
+        # print(x)
         return x
 
     def _descale_pred(self, p, flips, scale, img_size):
