@@ -135,9 +135,9 @@ class QuantModel(nn.Module):
     def forward(self, x, augment=False, profile=False, visualize=False):
         if augment:
             return self._forward_augment(x)  # augmented inference, None
-        print(x[0,0,:10,:10])
+        print(x[0,0,0,0])
         x = self.quant(x)
-        print(x[0,0,:10,:10])
+        print(x[0,0,0,0])
         x = self._forward_once(x, profile, visualize)  # single-scale inference, train
         return x
 
