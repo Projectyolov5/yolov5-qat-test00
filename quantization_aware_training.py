@@ -247,6 +247,28 @@ class QuantizedResNet18(nn.Module):
         x = self.dequant(x)
         return x
 
+class QuantizedNet(nn.Module):
+    def __init__(self, model_fp32):
+        super(QuantizedNet, self).__init__()
+        # QuantStub converts tensors from floating point to quantized.
+        # This will only be used for inputs.
+        self.quant = torch.quantization.QuantStub()
+        # DeQuantStub converts tensors from quantized to floating point.
+        # This will only be used for outputs.
+        self.dequant = torch.quantization.DeQuantStub()
+        # FP32 model
+        self.model_fp32 = model_fp32
+
+    def forward(self, x):
+        # manually specify where tensors will be converted from floating
+        # point to quantized in the quantized model
+        x = self.quant(x)
+        x = self.model_fp32(x)
+        # manually specify where tensors will be converted from quantized
+        # to floating point in the quantized model
+        x = self.dequant(x)
+        return x
+
 def model_equivalence(model_1, model_2, device, rtol=1e-05, atol=1e-08, num_tests=100, input_size=(1,3,32,32)):
 
     model_1.to(device)
@@ -289,8 +311,8 @@ def main():
     model = train_model(model=model, train_loader=train_loader, test_loader=test_loader, device=cuda_device, learning_rate=1e-1, num_epochs=200)
     # Save model.
     save_model(model=model, model_dir=model_dir, model_filename=model_filename)
-    # Load a pretrained model.
-    model = load_model(model=model, model_filepath=model_filepath, device=cuda_device)
+
+
 
 
 
@@ -300,6 +322,9 @@ def main():
 
 
 
+    
+    # Load a pretrained model.
+    model = load_model(model=model, model_filepath=model_filepath, device=cuda_device)
     # Move the model to CPU since static quantization does not support CUDA currently.
     model.to(cpu_device)
     # Make a copy of the model for layer fusion
@@ -376,9 +401,6 @@ def main():
 
     _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
-
-    # Skip this assertion since the values might deviate a lot.
-    # assert model_equivalence(model_1=model, model_2=quantized_jit_model, device=cpu_device, rtol=1e-01, atol=1e-02, num_tests=100, input_size=(1,3,32,32)), "Quantized model deviates from the original model too much!"
 
     print("FP32 evaluation accuracy: {:.3f}".format(fp32_eval_accuracy))
     print("INT8 evaluation accuracy: {:.3f}".format(int8_eval_accuracy))
