@@ -605,7 +605,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     quantized_model.model.qconfig = quantization_config
     
     # Print quantization configurations
-    # print(quantized_model.qconfig)
+    print(quantized_model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
     torch.quantization.prepare_qat(quantized_model.model, inplace=True)
