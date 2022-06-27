@@ -113,6 +113,9 @@ class QuantModel(nn.Module):
         self.names = [str(i) for i in range(self.yaml['nc'])]  # default names
         self.inplace = self.yaml.get('inplace', True)
 
+        self.quant = torch.quantization.QuantStub()
+        self.dequant = torch.quantization.DeQuantStub()
+
         # Build strides, anchors
         m = self.model[-1]  # Detect()
         if isinstance(m, Detect):
@@ -128,9 +131,6 @@ class QuantModel(nn.Module):
         initialize_weights(self)
         self.info()
         LOGGER.info('')
-
-        self.quant = torch.quantization.QuantStub()
-        self.dequant = torch.quantization.DeQuantStub()
 
     def forward(self, x, augment=False, profile=False, visualize=False):
         if augment:
