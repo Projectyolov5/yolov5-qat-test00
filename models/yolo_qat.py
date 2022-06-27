@@ -113,6 +113,9 @@ class QuantModel(nn.Module):
         self.names = [str(i) for i in range(self.yaml['nc'])]  # default names
         self.inplace = self.yaml.get('inplace', True)
 
+        self.model.quant = torch.quantization.QuantStub()
+        self.model.dequant = torch.quantization.DeQuantStub()
+
         # Build strides, anchors
         m = self.model[-1]  # Detect()
         if isinstance(m, Detect):
@@ -122,10 +125,9 @@ class QuantModel(nn.Module):
             check_anchor_order(m)  # must be in pixel-space (not grid-space)
             m.anchors /= m.stride.view(-1, 1, 1)
             self.stride = m.stride
-            self._initialize_biases()  # only run once
-
-        self.model.quant = torch.quantization.QuantStub()
-        self.model.dequant = torch.quantization.DeQuantStub()
+            self._initialize_biases()  # only run once        
+        else:
+            print(m)
 
         # Init weights, biases
         initialize_weights(self)
