@@ -596,7 +596,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print(quantized_model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
-    torch.quantization.prepare_qat(quantized_model, inplace=True)
+    torch.quantization.prepare_qat(quantized_model.model, inplace=True)
 
     # # Use training data for calibration.
     print("Training QAT Model...")
