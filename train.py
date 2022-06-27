@@ -579,12 +579,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #     if any(x in k for x in freeze):
     #         LOGGER.info(f'freezing {k}')
     #         v.requires_grad = False
-    for k, v in quantized_model.named_parameters():
-        if v.is_leaf:
-            pass
-        else:
-            print(k,v)
-            exit()
 
     quantized_model.to(cpu_device)
 
@@ -608,19 +602,19 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     # quantized_model = QuantizedNet(fused_model)
     quantization_config = torch.quantization.get_default_qconfig("fbgemm")
-    quantized_model.qconfig = quantization_config
+    quantized_model.model.qconfig = quantization_config
     
     # Print quantization configurations
-    print(quantized_model.qconfig)
+    # print(quantized_model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
     torch.quantization.prepare_qat(quantized_model.model, inplace=True)
-    for k, v in quantized_model.named_parameters():
-        if v.is_leaf:
-            pass
-        else:
-            print(k,v)
-            exit()    
+    # for k, v in quantized_model.named_parameters():
+    #     if v.is_leaf:
+    #         pass
+    #     else:
+    #         print(k,v)
+    #         exit()    
 
     # # Use training data for calibration.
     print("Training QAT Model...")
@@ -654,12 +648,12 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
             # v.requires_grad = True
             g[0].append(v.weight)
 
-    for i, v in enumerate(g[2]):
-        if v.is_leaf:
-            pass
-        else:
-            print(i,v)
-            exit()
+    # for i, v in enumerate(g[2]):
+    #     if v.is_leaf:
+    #         pass
+    #     else:
+    #         print(i,v)
+    #         exit()
     if opt.optimizer == 'Adam':
         optimizer = Adam(g[2], lr=hyp['lr0'], betas=(hyp['momentum'], 0.999))  # adjust beta1 to momentum
     elif opt.optimizer == 'AdamW':
