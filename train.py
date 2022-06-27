@@ -622,13 +622,14 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in quantized_model.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
+            if hasattr(v, 'quant') or hasattr(v, 'dequant'):
+                pass
             g[2].append(v.bias)
         if isinstance(v, bn):  # weight (no decay)
             g[1].append(v.weight)
         elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):  # weight (with decay)
             g[0].append(v.weight)
 
-    print(g[2])
     if opt.optimizer == 'Adam':
         optimizer = Adam(g[2], lr=hyp['lr0'], betas=(hyp['momentum'], 0.999))  # adjust beta1 to momentum
     elif opt.optimizer == 'AdamW':
