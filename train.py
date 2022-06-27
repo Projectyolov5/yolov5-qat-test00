@@ -579,9 +579,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #     if any(x in k for x in freeze):
     #         LOGGER.info(f'freezing {k}')
     #         v.requires_grad = False
-    for k, v in quantized_model.named_parameters():
-        print(k,v)
-        exit()
+    # for k, v in quantized_model.named_parameters():
+    #     print(k,v)
+    #     exit()
 
     quantized_model.to(cpu_device)
 
