@@ -563,15 +563,16 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # Otherwise the quantization aware training will not work correctly.
     fused_model.train()
 
-    # Fuse the model in place rather manually.
-    fused_model = torch.quantization.fuse_modules(fused_model, [["conv", "bn", "act"]], inplace=True)
-    for module_name, module in fused_model.named_children():
-        if "layer" in module_name:
-            for basic_block_name, basic_block in module.named_children():
-                torch.quantization.fuse_modules(basic_block, [["conv", "bn", "act"], ["conv", "bn"]], inplace=True)
-                for sub_block_name, sub_block in basic_block.named_children():
-                    if sub_block_name == "downsample":
-                        torch.quantization.fuse_modules(sub_block, [["0", "1"]], inplace=True)
+    # # Fuse the model in place rather manually.
+    # fused_model = torch.quantization.fuse_modules(fused_model, [["conv", "bn", "act"]], inplace=True)
+    # for module_name, module in fused_model.named_children():
+    #     if "layer" in module_name:
+    #         for basic_block_name, basic_block in module.named_children():
+    #             torch.quantization.fuse_modules(basic_block, [["conv", "bn", "act"], ["conv", "bn"]], inplace=True)
+    #             for sub_block_name, sub_block in basic_block.named_children():
+    #                 if sub_block_name == "downsample":
+    #                     torch.quantization.fuse_modules(sub_block, [["0", "1"]], inplace=True)
+    fused_model.fuse()
 
     assert model_equivalence(model_1=model, model_2=fused_model, device=cpu_device, rtol=1e-03, atol=1e-06, num_tests=100, input_size=(1,3,opt.imgsz,opt.imgsz)), "Fused model is not equivalent to the original model!"
 

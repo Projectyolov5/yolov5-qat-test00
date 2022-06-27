@@ -335,4 +335,6 @@ if __name__ == '__main__':
                 print(f'Error in {cfg}: {e}')
 
     else:  # report fused model summary
+        print(model)
         model.fuse()
+        print(model)
