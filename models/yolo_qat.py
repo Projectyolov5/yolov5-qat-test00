@@ -135,9 +135,10 @@ class QuantModel(nn.Module):
     def forward(self, x, augment=False, profile=False, visualize=False):
         if augment:
             return self._forward_augment(x)  # augmented inference, None
-        x = self.quant(x)
+        print(x.shape)
+        # x = self.quant(x)
         x = self._forward_once(x, profile, visualize)  # single-scale inference, train
-        return self.dequant(x)
+        return x
 
     def _forward_augment(self, x):
         img_size = x.shape[-2:]  # height, width
@@ -161,6 +162,8 @@ class QuantModel(nn.Module):
             if profile:
                 self._profile_one_layer(m, x, dt)
             x = m(x)  # run
+            print(x.shape, 'f')
+            # x = self.dequant(x)
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
