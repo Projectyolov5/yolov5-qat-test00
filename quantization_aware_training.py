@@ -283,7 +283,7 @@ def model_equivalence(model_1, model_2, device, rtol=1e-05, atol=1e-08, num_test
             y1 = y1.detach().cpu().numpy()
             y2 = y2.detach().cpu().numpy()
             if np.allclose(a=y1, b=y2, rtol=rtol, atol=atol, equal_nan=False) == False:
-                print("Model equivalence test sample failed: ", i)
+                print("Model equivalence test sample failed: ", y1.shape, y2.shape, (y1-y2).mean())
                 return False
 
     return True
