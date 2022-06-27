@@ -570,15 +570,15 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     
     # amp = check_amp(quantized_model)  # check AMP
 
-    # Freeze
-    freeze = opt.freeze
-    freeze = [f'quantized_model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
-    print(freeze)
-    for k, v in quantized_model.named_parameters():
-        v.requires_grad = True  # train all layers
-        if any(x in k for x in freeze):
-            LOGGER.info(f'freezing {k}')
-            v.requires_grad = False
+    # # Freeze
+    # freeze = opt.freeze
+    # freeze = [f'quantized_model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
+    # print(freeze)
+    # for k, v in quantized_model.named_parameters():
+    #     v.requires_grad = True  # train all layers
+    #     if any(x in k for x in freeze):
+    #         LOGGER.info(f'freezing {k}')
+    #         v.requires_grad = False
 
     quantized_model.to(cpu_device)
 
@@ -634,10 +634,13 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in quantized_model.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
+            v.bias.requires_grad = True
             g[2].append(v.bias)
         if isinstance(v, bn):  # weight (no decay)
+            v.weight.requires_grad = True
             g[1].append(v.weight)
         elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):  # weight (with decay)
+            v.weight.requires_grad = True
             g[0].append(v.weight)
 
     if opt.optimizer == 'Adam':
