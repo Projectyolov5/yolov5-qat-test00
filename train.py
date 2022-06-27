@@ -590,7 +590,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     quantized_model.train()
 
     # Image size
-    gs = max(int(quantized_model.stride.max()), 32)  # grid size (max stride)
+    gs = max(int(quantized_model.model_fp32.model.stride.max()), 32)  # grid size (max stride)
     imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)  # verify imgsz is gs-multiple
 
     # Batch size
