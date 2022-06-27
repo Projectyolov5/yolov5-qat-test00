@@ -579,7 +579,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #     if any(x in k for x in freeze):
     #         LOGGER.info(f'freezing {k}')
     #         v.requires_grad = False
-
+    quantized_model.eval()
     quantized_model.to(cpu_device)
 
     # model.train()
@@ -596,19 +596,19 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #             for sub_block_name, sub_block in basic_block.named_children():
     #                 if sub_block_name == "downsample":
     #                     torch.quantization.fuse_modules(sub_block, [["0", "1"]], inplace=True)
-    quantized_model.fuse()
+    quantized_model = quantized_model.fuse()
 
     # assert model_equivalence(model_1=model, model_2=fused_model, device=cpu_device, rtol=1e-03, atol=1e-06, num_tests=100, input_size=(1,3,opt.imgsz,opt.imgsz)), "Fused model is not equivalent to the original model!"
 
     # quantized_model = QuantizedNet(fused_model)
     quantization_config = torch.quantization.get_default_qconfig("fbgemm")
-    quantized_model.model.qconfig = quantization_config
+    quantized_model.qconfig = quantization_config
     
     # Print quantization configurations
-    print(quantized_model.model.qconfig)
+    print(quantized_model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
-    torch.quantization.prepare_qat(quantized_model.model, inplace=True)
+    torch.quantization.prepare_qat(quantized_model, inplace=True)
     # for k, v in quantized_model.named_parameters():
     #     if v.is_leaf:
     #         pass
