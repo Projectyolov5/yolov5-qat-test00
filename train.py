@@ -579,11 +579,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #     if any(x in k for x in freeze):
     #         LOGGER.info(f'freezing {k}')
     #         v.requires_grad = False
-
-    # Image size
-    gs = max(int(quantized_model.stride.max()), 32)  # grid size (max stride)
-    imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)  # verify imgsz is gs-multiple
-
     quantized_model.eval()
     quantized_model.to(cpu_device)
 
@@ -625,7 +620,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print("Training QAT Model...")
     quantized_model.to(device)
 
-    
+    # Image size
+    gs = max(int(quantized_model.model.stride.max()), 32)  # grid size (max stride)
+    imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)  # verify imgsz is gs-multiple
 
     # Batch size
     if RANK == -1 and batch_size == -1:  # single-GPU only, estimate best batch size
