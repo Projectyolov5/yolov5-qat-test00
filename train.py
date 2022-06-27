@@ -525,6 +525,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     assert len(names) == nc, f'{len(names)} names found for nc={nc} dataset in {data}'  # check
     is_coco = isinstance(val_path, str) and val_path.endswith('coco/val2017.txt')  # COCO dataset
 
+    check_suffix(weights, '.pt')  # check weights
+    pretrained = weights.endswith('.pt')
+    '''
     # Model
     check_suffix(weights, '.pt')  # check weights
     pretrained = weights.endswith('.pt')
@@ -555,7 +558,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
 
     model.to(cpu_device)
-
+    '''
     # fused_model = deepcopy(model)
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
