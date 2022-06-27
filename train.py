@@ -753,7 +753,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                        pad=0.5,
                                        prefix=colorstr('val: '))[0]
 
-        if not resume:
+        # if not resume:
             # labels = np.concatenate(dataset.labels, 0)
             # c = torch.tensor(labels[:, 0])  # classes
             # cf = torch.bincount(c.long(), minlength=nc) + 1.  # frequency
@@ -764,7 +764,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
             # Anchors
             # if not opt.noautoanchor:
                 # check_anchors(dataset, model=quantized_model, thr=hyp['anchor_t'], imgsz=imgsz)
-            quantized_model.half().float()  # pre-reduce anchor precision
+            # quantized_model.half().float()  # pre-reduce anchor precision
 
         callbacks.run('on_pretrain_routine_end')
 
