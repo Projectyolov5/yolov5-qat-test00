@@ -580,7 +580,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #         LOGGER.info(f'freezing {k}')
     #         v.requires_grad = False
     for k, v in quantized_model.named_parameters():
-        if k.is_leaf:
+        if v.is_leaf:
             pass
         else:
             print(k,v)
@@ -616,7 +616,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
     torch.quantization.prepare_qat(quantized_model.model, inplace=True)
     for k, v in quantized_model.named_parameters():
-        if k.is_leaf:
+        if v.is_leaf:
             pass
         else:
             print(k,v)
