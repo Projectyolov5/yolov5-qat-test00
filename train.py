@@ -603,7 +603,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # quantized_model = QuantizedNet(fused_model)
     quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
     quantized_model.model.qconfig = quantization_config
-    
+    quantized_model.quant.qconfig = quantization_config
+    quantized_model.dequant.qconfig = quantization_config
+
     # Print quantization configurations
     print(quantized_model.model.qconfig)
 
@@ -620,7 +622,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print("Training QAT Model...")
     quantized_model.to(device)
 
-    print(quantized_model)
+    # print(quantized_model)
 
     # Image size
     gs = max(int(quantized_model.stride.max()), 32)  # grid size (max stride)
