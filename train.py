@@ -572,7 +572,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         LOGGER.info(f'Transferred {len(csd)}/{len(quantized_model.state_dict())} items from {weights}')  # report
     
     # amp = check_amp(quantized_model)  # check AMP
-
+    amp = True
     # # Freeze
     # freeze = opt.freeze
     # freeze = [f'quantized_model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
@@ -754,12 +754,12 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                        prefix=colorstr('val: '))[0]
 
         if not resume:
-            labels = np.concatenate(dataset.labels, 0)
+            # labels = np.concatenate(dataset.labels, 0)
             # c = torch.tensor(labels[:, 0])  # classes
             # cf = torch.bincount(c.long(), minlength=nc) + 1.  # frequency
             # model._initialize_biases(cf.to(device))
-            if plots:
-                plot_labels(labels, names, save_dir)
+            # if plots:
+            #     plot_labels(labels, names, save_dir)
 
             # Anchors
             # if not opt.noautoanchor:
