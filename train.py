@@ -40,6 +40,7 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 import val  # for end-of-epoch mAP
 from models.experimental import attempt_load
 from models.yolo import Model
+from models.yolo_qat import QuantModel
 from utils.autoanchor import check_anchors
 from utils.autobatch import check_train_batch_size
 from utils.callbacks import Callbacks
@@ -554,12 +555,25 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
 
     model.to(cpu_device)
-    fused_model = deepcopy(model)
+
+    # fused_model = deepcopy(model)
+    if pretrained:
+        with torch_distributed_zero_first(LOCAL_RANK):
+            weights = attempt_download(weights)  # download if not found locally
+        ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
+        quantized_model = QuantModel(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+        csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+        csd = intersect_dicts(csd, quantized_model.state_dict(), exclude=exclude)  # intersect
+        quantized_model.load_state_dict(csd, strict=False)  # load
+        LOGGER.info(f'Transferred {len(csd)}/{len(quantized_model.state_dict())} items from {weights}')  # report
+    
+    quantized_model.to(cpu_device)
 
     model.train()
     # The model has to be switched to training mode before any layer fusion.
     # Otherwise the quantization aware training will not work correctly.
-    fused_model.train()
+    quantized_model.train()
 
     # # Fuse the model in place rather manually.
     # fused_model = torch.quantization.fuse_modules(fused_model, [["conv", "bn", "act"]], inplace=True)
@@ -570,11 +584,11 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #             for sub_block_name, sub_block in basic_block.named_children():
     #                 if sub_block_name == "downsample":
     #                     torch.quantization.fuse_modules(sub_block, [["0", "1"]], inplace=True)
-    fused_model.fuse()
+    quantized_model.fuse()
 
     # assert model_equivalence(model_1=model, model_2=fused_model, device=cpu_device, rtol=1e-03, atol=1e-06, num_tests=100, input_size=(1,3,opt.imgsz,opt.imgsz)), "Fused model is not equivalent to the original model!"
 
-    quantized_model = QuantizedNet(fused_model)
+    # quantized_model = QuantizedNet(fused_model)
     quantization_config = torch.quantization.get_default_qconfig("fbgemm")
     quantized_model.qconfig = quantization_config
     
@@ -582,7 +596,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print(quantized_model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
-    torch.quantization.prepare_qat(quantized_model.model_fp32.model, inplace=True)
+    torch.quantization.prepare_qat(quantized_model, inplace=True)
 
     # # Use training data for calibration.
     print("Training QAT Model...")
@@ -590,7 +604,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     quantized_model.train()
 
     # Image size
-    gs = max(int(quantized_model.model_fp32.stride.max()), 32)  # grid size (max stride)
+    gs = max(int(quantized_model.stride.max()), 32)  # grid size (max stride)
     imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)  # verify imgsz is gs-multiple
 
     # Batch size
@@ -606,7 +620,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     g = [], [], []  # optimizer parameter groups
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
-    for v in quantized_model.modules():
+    for v in quantized_model.model_fp32.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
             g[2].append(v.bias)
         if isinstance(v, bn):  # weight (no decay)
