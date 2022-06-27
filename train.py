@@ -613,6 +613,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # # Use training data for calibration.
     print("Training QAT Model...")
     quantized_model.to(device)
+    quantized_model.zero_grad()
     quantized_model.train()
 
     # Image size
