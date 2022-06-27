@@ -277,9 +277,11 @@ def model_equivalence(model_1, model_2, device, rtol=1e-05, atol=1e-08, num_test
     for _ in range(num_tests):
         x = torch.rand(size=input_size).to(device)
         
-        Y1 = model_1(x).detach().cpu().numpy()
-        Y2 = model_2(x).detach().cpu().numpy()
+        Y1 = model_1(x)
+        Y2 = model_2(x)
         for y1, y2 in zip(Y1, Y2):
+            y1 = y1.detach().cpu().numpy()
+            y2 = y2.detach().cpu().numpy()
             if np.allclose(a=y1, b=y2, rtol=rtol, atol=atol, equal_nan=False) == False:
                 print("Model equivalence test sample failed: ")
                 print(y1)
