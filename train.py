@@ -608,7 +608,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print(quantized_model.model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
-    torch.quantization.prepare_qat(quantized_model.model, inplace=True)
+    torch.quantization.prepare_qat(quantized_model.model)
     # for k, v in quantized_model.named_parameters():
     #     if v.is_leaf:
     #         pass
