@@ -162,7 +162,10 @@ class QuantModel(nn.Module):
             if profile:
                 self._profile_one_layer(m, x, dt)
             x = m(x)  # run
-            print(x.shape, 'f')
+            try:
+                print(x.shape, 'f')
+            except:
+                print(len(x))
             # x = self.dequant(x)
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
