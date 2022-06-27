@@ -564,11 +564,11 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     fused_model.train()
 
     # Fuse the model in place rather manually.
-    fused_model = torch.quantization.fuse_modules(fused_model, [["conv1", "bn1", "relu"]], inplace=True)
+    fused_model = torch.quantization.fuse_modules(fused_model, [["conv", "bn", "act"]], inplace=True)
     for module_name, module in fused_model.named_children():
         if "layer" in module_name:
             for basic_block_name, basic_block in module.named_children():
-                torch.quantization.fuse_modules(basic_block, [["conv1", "bn1", "relu1"], ["conv2", "bn2"]], inplace=True)
+                torch.quantization.fuse_modules(basic_block, [["conv", "bn", "act"], ["conv", "bn"]], inplace=True)
                 for sub_block_name, sub_block in basic_block.named_children():
                     if sub_block_name == "downsample":
                         torch.quantization.fuse_modules(sub_block, [["0", "1"]], inplace=True)
