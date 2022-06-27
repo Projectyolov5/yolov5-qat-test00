@@ -582,10 +582,10 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     quantized_model.to(cpu_device)
 
-    model.train()
+    # model.train()
     # The model has to be switched to training mode before any layer fusion.
     # Otherwise the quantization aware training will not work correctly.
-    quantized_model.train()
+    # quantized_model.train()
 
     # # Fuse the model in place rather manually.
     # fused_model = torch.quantization.fuse_modules(fused_model, [["conv", "bn", "act"]], inplace=True)
@@ -613,7 +613,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # # Use training data for calibration.
     print("Training QAT Model...")
     quantized_model.to(device)
-    quantized_model.train()
 
     # Image size
     gs = max(int(quantized_model.stride.max()), 32)  # grid size (max stride)
@@ -634,16 +633,13 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in quantized_model.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
-            v.bias = v.bias.detach()
-            v.requires_grad = True
+            # v.requires_grad = True
             g[2].append(v.bias)
         if isinstance(v, bn):  # weight (no decay)
-            v.weight = v.weight.detach()
-            v.requires_grad = True
+            # v.requires_grad = True
             g[1].append(v.weight)
         elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):  # weight (with decay)
-            v.weight = v.weight.detach()
-            v.requires_grad = True
+            # v.requires_grad = True
             g[0].append(v.weight)
 
     for i, v in enumerate(g[2]):
