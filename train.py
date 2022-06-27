@@ -762,8 +762,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                 plot_labels(labels, names, save_dir)
 
             # Anchors
-            if not opt.noautoanchor:
-                check_anchors(dataset, model=quantized_model, thr=hyp['anchor_t'], imgsz=imgsz)
+            # if not opt.noautoanchor:
+                # check_anchors(dataset, model=quantized_model, thr=hyp['anchor_t'], imgsz=imgsz)
             quantized_model.half().float()  # pre-reduce anchor precision
 
         callbacks.run('on_pretrain_routine_end')
