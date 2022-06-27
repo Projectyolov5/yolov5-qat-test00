@@ -164,7 +164,10 @@ class QuantModel(nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            print(x.dtype)
+            try:
+                print(x.dtype)
+            except:
+                print(x[0].dtype, x[1].dtype, x[2].dtype, x[3].dtype)
             x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
