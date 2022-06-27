@@ -634,15 +634,15 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in quantized_model.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
-            v = v.detach()
+            v.bias = v.bias.detach()
             v.requires_grad = True
             g[2].append(v.bias)
         if isinstance(v, bn):  # weight (no decay)
-            v = v.detach()
+            v.weight = v.weight.detach()
             v.requires_grad = True
             g[1].append(v.weight)
         elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):  # weight (with decay)
-            v = v.detach()
+            v.weight = v.weight.detach()
             v.requires_grad = True
             g[0].append(v.weight)
 
