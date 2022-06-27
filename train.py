@@ -602,13 +602,13 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     # quantized_model = QuantizedNet(fused_model)
     quantization_config = torch.quantization.get_default_qconfig("fbgemm")
-    quantized_model.qconfig = quantization_config
+    quantized_model.model.qconfig = quantization_config
     
     # Print quantization configurations
-    print(quantized_model.qconfig)
+    print(quantized_model.model.qconfig)
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
-    torch.quantization.prepare_qat(quantized_model, inplace=True)
+    torch.quantization.prepare_qat(quantized_model.model, inplace=True)
     # for k, v in quantized_model.named_parameters():
     #     if v.is_leaf:
     #         pass
@@ -637,7 +637,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     g = [], [], []  # optimizer parameter groups
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
-    for v in quantized_model.modules():
+    for v in quantized_model.model.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
             # v.requires_grad = True
             g[2].append(v.bias)
