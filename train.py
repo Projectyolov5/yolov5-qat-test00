@@ -556,6 +556,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     model.to(cpu_device)
     fused_model = deepcopy(model)
 
+    print(fused_model)
+
     model.train()
     # The model has to be switched to training mode before any layer fusion.
     # Otherwise the quantization aware training will not work correctly.
