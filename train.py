@@ -913,11 +913,11 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
                 # Save last, best and delete
                 # torch.save(ckpt, last)
-                torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model, inplace=True)), last)
+                torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model.to(cpu_device), inplace=True)), last)
 
                 if best_fitness == fi:
                     # torch.save(ckpt, best)
-                    torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model, inplace=True)), best)
+                    torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model.to(cpu_device), inplace=True)), best)
                 # if opt.save_period > 0 and epoch % opt.save_period == 0:
                     # torch.save(ckpt, w / f'epoch{epoch}.pt')
                 # del ckpt
