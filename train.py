@@ -604,7 +604,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # assert model_equivalence(model_1=model, model_2=fused_model, device=cpu_device, rtol=1e-03, atol=1e-06, num_tests=100, input_size=(1,3,opt.imgsz,opt.imgsz)), "Fused model is not equivalent to the original model!"
 
     # quantized_model = QuantizedNet(fused_model)
-    quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
+    # quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
+    quantization_config = torch.quantization.get_default_qconfig("fbgemm")
     quantized_model.model.qconfig = quantization_config
     quantized_model.quant.qconfig = quantization_config
     quantized_model.dequant.qconfig = quantization_config
