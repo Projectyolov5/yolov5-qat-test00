@@ -672,7 +672,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # EMA
     ema = ModelEMA(quantized_model) if RANK in {-1, 0} else None
     
-    print(quantized_model.model)
+    # print(quantized_model.model)
 
     # Resume
     start_epoch, best_fitness = 0, 0.0
