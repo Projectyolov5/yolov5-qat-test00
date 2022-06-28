@@ -125,11 +125,11 @@ def run(
 ):
     # Initialize/load model and set device
     training = model is not None
-    print(training)
+
     if training:  # called by train.py
         device, pt, jit, engine = next(model.parameters()).device, True, False, False  # get model device, PyTorch model
-        half &= device.type != 'cpu'  # half precision only supported on CUDA
-        model.half() if half else model.float()
+        # half &= device.type != 'cpu'  # half precision only supported on CUDA
+        # model.half() if half else model.float()
     else:  # called directly
         device = select_device(device, batch_size=batch_size)
 
@@ -208,7 +208,7 @@ def run(
         dt[0] += t2 - t1
 
         # Inference
-        out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
+        out, train_out = model(im) #if training else model(im, augment=augment, val=True)  # inference, loss outputs
         dt[1] += time_sync() - t2
 
         # Loss

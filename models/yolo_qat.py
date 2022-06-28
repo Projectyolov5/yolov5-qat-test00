@@ -171,7 +171,7 @@ class QuantModel(nn.Module):
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
         # print(x[0][0,0,0])
-        print(x[0])
+        print(type(x[0]))
         x[0] = self.dequant(x[0])
         x[1] = self.dequant(x[2])
         x[2] = self.dequant(x[2])
