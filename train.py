@@ -944,7 +944,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # end training -----------------------------------------------------------------------------------------------------
 
     quantized_model.to(cpu_device)
-    quantized_model = torch.quantization.convert(quantized_model, inplace=True)
+    quantized_model.model = torch.quantization.convert(quantized_model.model, inplace=True)
+    quantized_model.quant = torch.quantization.convert(quantized_model.quant, inplace=True)
+    quantized_model.dequant = torch.quantization.convert(quantized_model.quant, inplace=True)
     quantized_model.eval()
 
     # model_dir = save_dir
