@@ -952,7 +952,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     # _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
-
+    '''
     fp32_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
                                 imgsz=imgsz,
@@ -966,7 +966,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 compute_loss=compute_loss)
     
     fi_fp32 = fitness(np.array(fp32_results).reshape(1, -1))
-
+    '''
     int8_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
                                 imgsz=imgsz,
@@ -979,7 +979,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 callbacks=callbacks,
                                 compute_loss=compute_loss)
     
-    fi_int8 = fitness(np.array(fp32_results).reshape(1, -1))
+    fi_int8 = fitness(np.array(int8_results).reshape(1, -1))
     
     print("FP32 evaluation", fi_fp32)
     print("INT8 evaluation", fi_int8)
