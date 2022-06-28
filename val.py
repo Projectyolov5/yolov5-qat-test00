@@ -196,8 +196,12 @@ def run(
         if cuda:
             im = im.to(device, non_blocking=True)
             targets = targets.to(device)
-        im = im.half() if half else im.float()  # uint8 to fp16/32
+        # im = im.half() if half else im.float()  # uint8 to fp16/32
+        im = im.float()
         im /= 255  # 0 - 255 to 0.0 - 1.0
+        # im = im.to(dtype=torch.float32)
+        # im = (im - 0.5) / 0.5
+        
         nb, _, height, width = im.shape  # batch size, channels, height, width
         t2 = time_sync()
         dt[0] += t2 - t1

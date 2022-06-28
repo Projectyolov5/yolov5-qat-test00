@@ -569,7 +569,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         LOGGER.info(f'Transferred {len(csd)}/{len(quantized_model.state_dict())} items from {weights}')  # report
     
     # amp = check_amp(quantized_model)  # check AMP
-    amp = True
+    # amp = True
     # # Freeze
     # freeze = opt.freeze
     # freeze = [f'quantized_model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
@@ -816,8 +816,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
-            imgs = imgs.to(dtype=torch.float32)
-            imgs = (imgs - 0.5) / 0.5
+            # imgs = imgs.to(dtype=torch.float32)
+            # imgs = (imgs - 0.5) / 0.5
 
             # Warmup
             if ni <= nw:
