@@ -880,6 +880,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
             # mAP
             callbacks.run('on_train_epoch_end', epoch=epoch)
             ema.update_attr(quantized_model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
+            '''
             final_epoch = (epoch + 1 == epochs) or stopper.possible_stop
             if not noval or final_epoch:  # Calculate mAP
                 results, maps, _ = val.run(data_dict,
@@ -899,6 +900,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                 best_fitness = fi
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
+            '''
 
             # Save model
             # if (not nosave) or (final_epoch and not evolve):  # if save
