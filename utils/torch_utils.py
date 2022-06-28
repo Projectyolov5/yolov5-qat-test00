@@ -308,7 +308,7 @@ class ModelEMA:
             msd = de_parallel(model).state_dict()  # model state_dict
             for k, v in self.ema.state_dict().items():
                 if v.dtype.is_floating_point:
-                    if ".scale" in k:
+                    if ".scale" or ".min_val" or ".max_val" in k:
                         continue
                     try:
                         v *= d
