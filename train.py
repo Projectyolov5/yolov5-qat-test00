@@ -527,10 +527,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     check_suffix(weights, '.pt')  # check weights
     pretrained = weights.endswith('.pt')
-    '''
-    # Model
-    check_suffix(weights, '.pt')  # check weights
-    pretrained = weights.endswith('.pt')
+ 
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
             weights = attempt_download(weights)  # download if not found locally
@@ -556,9 +553,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
             LOGGER.info(f'freezing {k}')
             v.requires_grad = False
 
-
     model.to(cpu_device)
-    '''
+
+    
     # fused_model = deepcopy(model)
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
@@ -814,6 +811,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')  # progress bar
         optimizer.zero_grad()
+        '''
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
@@ -871,6 +869,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                 if callbacks.stop_training:
                     return
             # end batch ------------------------------------------------------------------------------------------------
+        '''
 
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
@@ -905,7 +904,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                 ckpt = {
                     'epoch': epoch,
                     'best_fitness': best_fitness,
-                    'model': deepcopy(de_parallel(quantized_model)).half(),
+                    'model': deepcopy(de_parallel(quantized_model)),
                     'ema': deepcopy(ema.ema).half(),
                     'updates': ema.updates,
                     'optimizer': optimizer.state_dict(),
@@ -942,15 +941,14 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     quantized_model = torch.quantization.convert(quantized_model, inplace=True)
     quantized_model.eval()
 
-    model_dir = "saved_models"
-    model_filename = "resnet18_cifar10.pt"
-    quantized_model_filename = "resnet18_quantized_cifar10.pt"
-    model_filepath = os.path.join(model_dir, model_filename)
-    quantized_model_filepath = os.path.join(model_dir, quantized_model_filename)
+    # model_dir = save_dir
+    # model_filename = "best.pt"
+    # quantized_model_filename = "resnet18_quantized_cifar10.pt"
+    # model_filepath = os.path.join(model_dir, model_filename)
+    # quantized_model_filepath = os.path.join(model_dir, quantized_model_filename)
 
-    model = torch.load_state_dict()
-    save_torchscript_model(model=quantized_model, model_dir=model_dir, model_filename=quantized_model_filename)
-    quantized_jit_model = load_torchscript_model(model_filepath=quantized_model_filepath, device=cpu_device)
+    # save_torchscript_model(model=quantized_model, model_dir=model_dir, model_filename=quantized_model_filename)
+    quantized_jit_model = load_torchscript_model(model_filepath=best, device=cpu_device)
     
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     # _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
@@ -966,7 +964,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 plots=False,
                                 callbacks=callbacks,
                                 compute_loss=compute_loss)
-
+    
+    fi_fp32 = fitness(np.array(fp32_results).reshape(1, -1))
 
     int8_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
@@ -979,7 +978,11 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 plots=False,
                                 callbacks=callbacks,
                                 compute_loss=compute_loss)
-
+    
+    fi_int8 = fitness(np.array(fp32_results).reshape(1, -1))
+    
+    print("FP32 evaluation", fi_fp32)
+    print("INT8 evaluation", fi_int8)
     # print("FP32 evaluation mAP_0.5:95 : {:.3f}".format(fp32_eval_accuracy))
     # print("INT8 evaluation mAP_0.5:95 : {:.3f}".format(int8_eval_accuracy))
 
