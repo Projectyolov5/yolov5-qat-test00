@@ -11,7 +11,7 @@
 path: /data/clearml/od-dataset #../datasets/coco128  # dataset root dir
 train: ['od-dataset-prw'] #,'od-dataset-mot20','od-dataset-mot17','od-dataset-crowdhuman','od-dataset-citypersons','od-dataset-caltech','od-dataset-ochuman','od-dataset-267','od-dataset-223','od-dataset-290','od-dataset-306','od-dataset-291',]
 #train: [od-dataset-223, od-dataset-291, od-dataset-caltech, od-dataset-mot17, od-dataset-prw, od-dataset-267, od-dataset-306, od-dataset-citypersons, od-dataset-mot20, od-dataset-290, od-dataset-294-ppg, od-dataset-crowdhuman, od-dataset-ochuman]
-val: ['od-dataset-294'] #, 'od-dataset-295', 'od-dataset-313'] # images/train2017  # val images (relative to 'path') 128 images
+val: ['od-dataset-313'] # ['od-dataset-294', 'od-dataset-295', 'od-dataset-313'] # images/train2017  # val images (relative to 'path') 128 images
 test:  # test images (optional)
 
 # Classes

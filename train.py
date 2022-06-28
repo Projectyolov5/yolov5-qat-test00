@@ -947,13 +947,15 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # model_filepath = os.path.join(model_dir, model_filename)
     # quantized_model_filepath = os.path.join(model_dir, quantized_model_filename)
 
+    quantized_model_filepath = os.path.join(save_dir, "weights", "best-jit.pt")
     # save_torchscript_model(model=quantized_model, model_dir=model_dir, model_filename=quantized_model_filename)
-    quantized_jit_model = load_torchscript_model(model_filepath=best, device=cpu_device)
+    torch.jit.save(torch.jit.script(ema), quantized_model_filepath)
+    quantized_jit_model = load_torchscript_model(model_filepath=quantized_model_filepath, device=cpu_device)
     
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     # _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
-    '''
-    print(FP32 Validation)
+    
+    print("FP32 Validation")
     fp32_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
                                 imgsz=imgsz,
@@ -967,7 +969,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 compute_loss=compute_loss)
     
     fi_fp32 = fitness(np.array(fp32_results).reshape(1, -1))
-    '''
+    
     print("INT8 Validation")
     int8_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
