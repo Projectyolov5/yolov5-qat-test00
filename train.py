@@ -884,7 +884,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                 results, maps, _ = val.run(data_dict,
                                            batch_size=batch_size // WORLD_SIZE * 2,
                                            imgsz=imgsz,
-                                           model=ema.ema,
+                                           model=quantized_model, #ema.ema,
                                            single_cls=single_cls,
                                            dataloader=val_loader,
                                            save_dir=save_dir,
@@ -901,23 +901,26 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
             # Save model
             if (not nosave) or (final_epoch and not evolve):  # if save
-                ckpt = {
-                    'epoch': epoch,
-                    'best_fitness': best_fitness,
-                    'model': deepcopy(de_parallel(quantized_model)),
-                    'ema': deepcopy(ema.ema).half(),
-                    'updates': ema.updates,
-                    'optimizer': optimizer.state_dict(),
-                    'wandb_id': loggers.wandb.wandb_run.id if loggers.wandb else None,
-                    'date': datetime.now().isoformat()}
+                # ckpt = {
+                #     'epoch': epoch,
+                #     'best_fitness': best_fitness,
+                #     'model': deepcopy(de_parallel(quantized_model)),
+                #     'ema': deepcopy(ema.ema).half(),
+                #     'updates': ema.updates,
+                #     'optimizer': optimizer.state_dict(),
+                #     'wandb_id': loggers.wandb.wandb_run.id if loggers.wandb else None,
+                #     'date': datetime.now().isoformat()}
 
                 # Save last, best and delete
-                torch.save(ckpt, last)
+                # torch.save(ckpt, last)
+                torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model, inplace=True)), last)
+
                 if best_fitness == fi:
-                    torch.save(ckpt, best)
-                if opt.save_period > 0 and epoch % opt.save_period == 0:
-                    torch.save(ckpt, w / f'epoch{epoch}.pt')
-                del ckpt
+                    # torch.save(ckpt, best)
+                    torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model, inplace=True)), best)
+                # if opt.save_period > 0 and epoch % opt.save_period == 0:
+                    # torch.save(ckpt, w / f'epoch{epoch}.pt')
+                # del ckpt
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
             # Stop Single-GPU
@@ -949,7 +952,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     quantized_model_filepath = os.path.join(save_dir, "weights", "best-jit.pt")
     # save_torchscript_model(model=quantized_model, model_dir=model_dir, model_filename=quantized_model_filename)
-    torch.jit.save(torch.jit.script(ema), quantized_model_filepath)
+    torch.jit.save(torch.jit.script(quantized_model), quantized_model_filepath)
     quantized_jit_model = load_torchscript_model(model_filepath=quantized_model_filepath, device=cpu_device)
     
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
