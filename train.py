@@ -571,8 +571,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         quantized_model.load_state_dict(csd, strict=False)  # load
         LOGGER.info(f'Transferred {len(csd)}/{len(quantized_model.state_dict())} items from {weights}')  # report
     
-    amp = check_amp(quantized_model)  # check AMP
-    # amp = True
+    # amp = check_amp(quantized_model)  # check AMP
+    amp = True
     # # Freeze
     # freeze = opt.freeze
     # freeze = [f'quantized_model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
@@ -582,8 +582,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #     if any(x in k for x in freeze):
     #         LOGGER.info(f'freezing {k}')
     #         v.requires_grad = False
-    quantized_model.quant = torch.quantization.QuantStub()
-    quantized_model.dequant = torch.quantization.DeQuantStub()
     quantized_model.eval()
     quantized_model.to(cpu_device)
 
@@ -616,12 +614,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
     quantized_model.model = torch.quantization.prepare_qat(quantized_model.model)
-    # for k, v in quantized_model.named_parameters():
-    #     if v.is_leaf:
-    #         pass
-    #     else:
-    #         print(k,v)
-    #         exit()    
 
     # # Use training data for calibration.
     print("Training QAT Model...")
@@ -648,21 +640,12 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in quantized_model.model.modules():
         if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):  # bias
-            # v.requires_grad = True
             g[2].append(v.bias)
         if isinstance(v, bn):  # weight (no decay)
-            # v.requires_grad = True
             g[1].append(v.weight)
         elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):  # weight (with decay)
-            # v.requires_grad = True
             g[0].append(v.weight)
 
-    # for i, v in enumerate(g[2]):
-    #     if v.is_leaf:
-    #         pass
-    #     else:
-    #         print(i,v)
-    #         exit()
     if opt.optimizer == 'Adam':
         optimizer = Adam(g[2], lr=hyp['lr0'], betas=(hyp['momentum'], 0.999))  # adjust beta1 to momentum
     elif opt.optimizer == 'AdamW':
