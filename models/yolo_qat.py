@@ -170,6 +170,7 @@ class QuantModel(nn.Module):
                 x = m(x)  # run
             except:
                 print(index, "error occured")
+                exit()
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
