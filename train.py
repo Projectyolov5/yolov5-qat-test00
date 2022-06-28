@@ -962,7 +962,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     # _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
-    ''''''
+    '''
     print("FP32 Validation")
     fp32_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
@@ -997,17 +997,17 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print("INT8 evaluation", fi_int8)
     # print("FP32 evaluation mAP_0.5:95 : {:.3f}".format(fp32_eval_accuracy))
     # print("INT8 evaluation mAP_0.5:95 : {:.3f}".format(int8_eval_accuracy))
-    ''''''
+    '''
 
     fp32_cpu_inference_latency = measure_inference_latency(model=model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
     int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
     fp32_gpu_inference_latency = measure_inference_latency(model=model, device=device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
-    int8_jit_cpu_inference_latency = measure_inference_latency(model=quantized_jit_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
+    # int8_jit_cpu_inference_latency = measure_inference_latency(model=quantized_jit_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
     
     print("FP32 CPU Inference Latency: {:.2f} ms / sample".format(fp32_cpu_inference_latency * 1000))
     print("FP32 CUDA Inference Latency: {:.2f} ms / sample".format(fp32_gpu_inference_latency * 1000))
     print("INT8 CPU Inference Latency: {:.2f} ms / sample".format(int8_cpu_inference_latency * 1000))
-    print("INT8 JIT CPU Inference Latency: {:.2f} ms / sample".format(int8_jit_cpu_inference_latency * 1000))
+    # print("INT8 JIT CPU Inference Latency: {:.2f} ms / sample".format(int8_jit_cpu_inference_latency * 1000))
 
 
     # if RANK in {-1, 0}:
