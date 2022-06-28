@@ -875,6 +875,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
         scheduler.step()
 
+        print("Validate")
         if RANK in {-1, 0}:
             # mAP
             callbacks.run('on_train_epoch_end', epoch=epoch)
@@ -900,7 +901,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
             # Save model
-            if (not nosave) or (final_epoch and not evolve):  # if save
+            # if (not nosave) or (final_epoch and not evolve):  # if save
                 # ckpt = {
                 #     'epoch': epoch,
                 #     'best_fitness': best_fitness,
@@ -913,15 +914,15 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
                 # Save last, best and delete
                 # torch.save(ckpt, last)
-                torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model.to(cpu_device), inplace=True)), last)
+                # torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model.to(cpu_device), inplace=True)), last)
 
-                if best_fitness == fi:
+                # if best_fitness == fi:
                     # torch.save(ckpt, best)
-                    torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model.to(cpu_device), inplace=True)), best)
+                    # torch.jit.save(torch.jit.script(torch.quantization.convert(quantized_model.to(cpu_device), inplace=True)), best)
                 # if opt.save_period > 0 and epoch % opt.save_period == 0:
                     # torch.save(ckpt, w / f'epoch{epoch}.pt')
                 # del ckpt
-                callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
+                # callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
             # Stop Single-GPU
             if RANK == -1 and stopper(epoch=epoch, fitness=fi):
