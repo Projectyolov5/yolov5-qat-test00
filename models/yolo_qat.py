@@ -157,25 +157,32 @@ class QuantModel(nn.Module):
 
     def _forward_once(self, x, profile=False, visualize=False):
         y, dt = [], []  # outputs
-        for m in self.model:
+        for m in self.model[:-1]:
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            # try:
-            #     print(x.dtype)
-            # except:
-            #     print(x[0].dtype)
             x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
-        # print(x[0][0,0,0])
-        print(type(x[0]))
-        x[0] = self.dequant(x[0])
-        x[1] = self.dequant(x[2])
-        x[2] = self.dequant(x[2])
-        x[3] = self.dequant(x[3])
+        x = self.dequant(x)
+        m = self.model[-1]
+        if m.f != -1:  # if not from previous layer
+            x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+        if profile:
+            self._profile_one_layer(m, x, dt)
+
+        x = m(x)  # run
+        y.append(x if m.i in self.save else None)  # save output
+        if visualize:
+            feature_visualization(x, m.type, m.i, save_dir=visualize)
+        # # print(x[0][0,0,0])
+        # print(type(x[0]))
+        # x[0] = self.dequant(x[0])
+        # x[1] = self.dequant(x[2])
+        # x[2] = self.dequant(x[2])
+        # x[3] = self.dequant(x[3])
         # print(x[0][0,0,0])
         return x
 
