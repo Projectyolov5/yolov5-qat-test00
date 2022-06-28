@@ -604,8 +604,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # assert model_equivalence(model_1=model, model_2=fused_model, device=cpu_device, rtol=1e-03, atol=1e-06, num_tests=100, input_size=(1,3,opt.imgsz,opt.imgsz)), "Fused model is not equivalent to the original model!"
 
     # quantized_model = QuantizedNet(fused_model)
-    # quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
-    quantization_config = torch.quantization.get_default_qconfig("fbgemm")
+    quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
+    # quantization_config = torch.quantization.get_default_qconfig("fbgemm")
     quantized_model.model.qconfig = quantization_config
     quantized_model.quant.qconfig = quantization_config
     quantized_model.dequant.qconfig = quantization_config
@@ -615,6 +615,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     # https://pytorch.org/docs/stable/_modules/torch/quantization/quantize.html#prepare_qat
     quantized_model.model = torch.quantization.prepare_qat(quantized_model.model)
+    quantized_model.quant = torch.quantization.prepare_qat(quantized_model.quant)
+    quantized_model.dequant = torch.quantization.prepare_qat(quantized_model.dequant)
 
     # # Use training data for calibration.
     print("Training QAT Model...")
