@@ -310,8 +310,11 @@ class ModelEMA:
                 if v.dtype.is_floating_point:
                     if ".scale" in k:
                         continue
-                    v *= d
-                    v += (1 - d) * msd[k].detach()
+                    try:
+                        v *= d
+                        v += (1 - d) * msd[k].detach()
+                    except:
+                        print(k)
 
     def update_attr(self, model, include=(), exclude=('process_group', 'reducer')):
         # Update EMA attributes
