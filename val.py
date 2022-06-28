@@ -114,7 +114,7 @@ def run(
         project=ROOT / 'runs/val',  # save to project/name
         name='exp',  # save to project/name
         exist_ok=False,  # existing project/name ok, do not increment
-        half=True,  # use FP16 half-precision inference
+        half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         model=None,
         dataloader=None,
@@ -199,7 +199,7 @@ def run(
         # im = im.half() if half else im.float()  # uint8 to fp16/32
         im = im.float()
         im /= 255  # 0 - 255 to 0.0 - 1.0
-        # im = im.to(dtype=torch.float32)
+        im = im.to(dtype=torch.float32)
         # im = (im - 0.5) / 0.5
         
         nb, _, height, width = im.shape  # batch size, channels, height, width
