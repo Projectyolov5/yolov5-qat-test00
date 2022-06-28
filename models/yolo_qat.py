@@ -339,6 +339,12 @@ if __name__ == '__main__':
 
     # Options
     if opt.line_profile:  # profile layer by layer
+        quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
+        model.model.qconfig = quantization_config
+        model.quant.qconfig = quantization_config
+        model.dequant.qconfig = quantization_config
+        model.model = torch.quantization.prepare_qat(model.model)
+        model = model.fuse()
         output = model(im, profile=True)
         print(output)
 
