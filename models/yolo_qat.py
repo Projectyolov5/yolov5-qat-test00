@@ -113,8 +113,8 @@ class QuantModel(nn.Module):
         self.names = [str(i) for i in range(self.yaml['nc'])]  # default names
         self.inplace = self.yaml.get('inplace', True)
 
-        self.quant = torch.quantization.QuantStub()
-        self.dequant = torch.quantization.DeQuantStub()
+        # self.quant = torch.quantization.QuantStub()
+        # self.dequant = torch.quantization.DeQuantStub()
 
         # Build strides, anchors
         m = self.model[-1]  # Detect()
@@ -137,9 +137,9 @@ class QuantModel(nn.Module):
     def forward(self, x, augment=False, profile=False, visualize=False):
         if augment:
             return self._forward_augment(x)  # augmented inference, None
-        print(x.dtype)
+        # print(x.dtype)
         x = self.quant(x)
-        print(x.dtype)
+        # print(x.dtype)
         x = self._forward_once(x, profile, visualize)  # single-scale inference, train
         return x
 
@@ -164,10 +164,10 @@ class QuantModel(nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            try:
-                print(x.dtype)
-            except:
-                print(x[0].dtype)
+            # try:
+            #     print(x.dtype)
+            # except:
+            #     print(x[0].dtype)
             x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
