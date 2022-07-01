@@ -738,7 +738,8 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                        rank=-1,
                                        workers=workers * 2,
                                        pad=0.5,
-                                       prefix=colorstr('val: '))[0]
+                                       prefix=colorstr('val: '),
+                                       train=False)[0]
 
         # if not resume:
             # labels = np.concatenate(dataset.labels, 0)

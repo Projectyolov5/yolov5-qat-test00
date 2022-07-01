@@ -14,6 +14,12 @@ fused_model = copy.deepcopy(model)
 def dfs_fuse(module):
     for m_name, m in module.named_children():
         print(m_name)
+        if "Conv" in m_name:
+            torch.quantization.fuse_modules(m, [["conv", "bn", "act"]], inplace=True)
+            continue
+        if "cv" in m_name:
+            torch.quantization.fuse_modules(m, [["conv", "bn", "act"]], inplace=True)
+            continue
         dfs_fuse(m)
 
 dfs_fuse(fused_model)
