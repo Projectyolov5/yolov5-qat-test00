@@ -253,11 +253,11 @@ class QuantizedNet(nn.Module):
         # QuantStub converts tensors from floating point to quantized.
         # This will only be used for inputs.
         self.quant = torch.quantization.QuantStub()
+        # FP32 model
+        self.model_fp32 = model_fp32
         # DeQuantStub converts tensors from quantized to floating point.
         # This will only be used for outputs.
         self.dequant = torch.quantization.DeQuantStub()
-        # FP32 model
-        self.model_fp32 = model_fp32
 
     def forward(self, x):
         # manually specify where tensors will be converted from floating
