@@ -20,8 +20,67 @@ class QuantizedNet(nn.Module):
         x = self.model_fp32(x)
         # manually specify where tensors will be converted from quantized
         # to floating point in the quantized model
+        # x[0] = self.dequant(x[0])
+        # x[1] = self.dequant(x[1])
+        # x[2] = self.dequant(x[2])
+        # x[3] = self.dequant(x[3])
         x = self.dequant(x)
         return x
+
+class output_maker(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+        self.grid1, self.anchor_grid1 = _make_grid([19, 27, 44, 40, 38, 94], 160, 160, 8, torch.device("cuda:0"), torch.float32)
+        self.grid2, self.anchor_grid2 = _make_grid([96, 68, 86, 152, 180, 137], 80, 80, 16, torch.device("cuda:0"), torch.float32)
+        self.grid3, self.anchor_grid3 = _make_grid([140, 301, 303, 264, 238, 542], 40, 40, 32, torch.device("cuda:0"), torch.float32)
+        self.grid4, self.anchor_grid4 = _make_grid([436, 615, 739, 380, 925, 792], 20, 20, 64, torch.device("cuda:0"), torch.float32)
+
+        self.grid1 = nn.Parameter(self.grid1, requires_grad=False)
+        self.grid2 = nn.Parameter(self.grid2, requires_grad=False)
+        self.grid3 = nn.Parameter(self.grid3, requires_grad=False)
+        self.grid4 = nn.Parameter(self.grid4, requires_grad=False)
+
+        self.anchor_grid1 = nn.Parameter(self.anchor_grid1, requires_grad=False)
+        self.anchor_grid2 = nn.Parameter(self.anchor_grid2, requires_grad=False)
+        self.anchor_grid3 = nn.Parameter(self.anchor_grid3, requires_grad=False)
+        self.anchor_grid4 = nn.Parameter(self.anchor_grid4, requires_grad=False)
+
+    def forward(self, x):
+        bs = x.shape[0]
+
+        x23 = x[:,:,:25600]
+        x26 = x[:,:,25600:32000]
+        x29 = x[:,:,32000:33600]
+        x32 = x[:,:,33600:34000]
+
+        x23 = x23.view(bs, 3, 6, 160, 160).permute(0, 1, 3, 4, 2).contiguous()
+        x26 = x26.view(bs, 3, 6, 80, 80).permute(0, 1, 3, 4, 2).contiguous()
+        x29 = x29.view(bs, 3, 6, 40, 40).permute(0, 1, 3, 4, 2).contiguous()
+        x32 = x32.view(bs, 3, 6, 20, 20).permute(0, 1, 3, 4, 2).contiguous()
+
+        if not self.training:
+            y23 = x23.sigmoid()
+            y23[..., 0:2] = (y23[..., 0:2] * 2 + self.grid1) * 8
+            y23[..., 2:4] = (y23[..., 2:4] * 2) ** 2 * self.anchor_grid1
+
+            y26 = x26.sigmoid()
+            y26[..., 0:2] = (y26[..., 0:2] * 2 + self.grid2) * 16
+            y26[..., 2:4] = (y26[..., 2:4] * 2) ** 2 * self.anchor_grid2
+
+            y29 = x29.sigmoid()
+            y29[..., 0:2] = (y29[..., 0:2] * 2 + self.grid3) * 32
+            y29[..., 2:4] = (y29[..., 2:4] * 2) ** 2 * self.anchor_grid3
+
+            y32 = x32.sigmoid()
+            y32[..., 0:2] = (y32[..., 0:2] * 2 + self.grid4) * 64
+            y32[..., 2:4] = (y32[..., 2:4] * 2) ** 2 * self.anchor_grid4
+
+            z = [y23.view(bs, -1, 6), y26.view(bs, -1, 6), y29.view(bs, -1, 6), y32.view(bs, -1, 6)]
+            
+            return (torch.cat(z, 1), [x23, x26, x29, x32])
+
+        return x23, x26, x29, x32
 
 def _make_grid(anchors, nx, ny, stride, device, dtype):
     anchors = torch.tensor(anchors).float().view(-1, 2).to(device)
@@ -98,11 +157,6 @@ class yolov5s6(nn.Module):
         self.scale3 = nn.Conv2d(384, 18, 1)
         self.scale4 = nn.Conv2d(512, 18, 1)
 
-        self.grid1, self.anchor_grid1 = _make_grid([19, 27, 44, 40, 38, 94], 160, 160, 8, torch.device("cuda:0"), torch.float32)
-        self.grid2, self.anchor_grid2 = _make_grid([96, 68, 86, 152, 180, 137], 80, 80, 16, torch.device("cuda:0"), torch.float32)
-        self.grid3, self.anchor_grid3 = _make_grid([140, 301, 303, 264, 238, 542], 40, 40, 32, torch.device("cuda:0"), torch.float32)
-        self.grid4, self.anchor_grid4 = _make_grid([436, 615, 739, 380, 925, 792], 20, 20, 64, torch.device("cuda:0"), torch.float32)
-
     def forward(self, x):
         x4 = self.layer_0to4(x)
         x6 = self.layer_5to6(x4)
@@ -121,36 +175,15 @@ class yolov5s6(nn.Module):
         x26 = self.scale2(x26)
         x29 = self.scale3(x29)
         x32 = self.scale4(x32)
+        
+        bs = x.shape[0]
+        x23 = x23.reshape(bs,18,-1)
+        x26 = x26.reshape(bs,18,-1)
+        x29 = x29.reshape(bs,18,-1)
+        x32 = x32.reshape(bs,18,-1)
 
-        bs, _, _, _ = x23.shape
-        x23 = x23.view(bs, 3, 6, 160, 160).permute(0, 1, 3, 4, 2).contiguous()
-        x26 = x26.view(bs, 3, 6, 80, 80).permute(0, 1, 3, 4, 2).contiguous()
-        x29 = x29.view(bs, 3, 6, 40, 40).permute(0, 1, 3, 4, 2).contiguous()
-        x32 = x32.view(bs, 3, 6, 20, 20).permute(0, 1, 3, 4, 2).contiguous()
-
-        if not self.training:
-
-            y23 = x23.sigmoid()
-            y23[..., 0:2] = (y23[..., 0:2] * 2 + self.grid1) * 8
-            y23[..., 2:4] = (y23[..., 2:4] * 2) ** 2 * self.anchor_grid1
-
-            y26 = x26.sigmoid()
-            y26[..., 0:2] = (y26[..., 0:2] * 2 + self.grid2) * 16
-            y26[..., 2:4] = (y26[..., 2:4] * 2) ** 2 * self.anchor_grid2
-
-            y29 = x29.sigmoid()
-            y29[..., 0:2] = (y29[..., 0:2] * 2 + self.grid3) * 32
-            y29[..., 2:4] = (y29[..., 2:4] * 2) ** 2 * self.anchor_grid3
-
-            y32 = x32.sigmoid()
-            y32[..., 0:2] = (y32[..., 0:2] * 2 + self.grid4) * 64
-            y32[..., 2:4] = (y32[..., 2:4] * 2) ** 2 * self.anchor_grid4
-
-            z = [y23.view(bs, -1, 6), y26.view(bs, -1, 6), y29.view(bs, -1, 6), y32.view(bs, -1, 6)]
-            
-            return (torch.cat(z, 1), [x23, x26, x29, x32])
-
-        return x23, x26, x29, x32
+        x = torch.cat((x23,x26,x29,x32), dim=2)
+        return x
 
 if __name__ == "__main__":
     device = torch.device("cuda:0")
@@ -160,11 +193,15 @@ if __name__ == "__main__":
 
     a.train()
     c = a(b)
+    print(c.shape)
     # print(len(c))
-    print(c[0].shape, c[1].shape, c[2].shape, c[3].shape)
 
-    a.eval()
-    d, c = a(b)
+    d = output_maker().to(device)
+    e = d(c)
+    print(e[0].shape, e[1].shape, e[2].shape, e[3].shape)
+    
+    d.eval()
+    e,f = d(c)
 
-    print(len(d))
-    print(c[0].shape, c[1].shape, c[2].shape, c[3].shape)
+    print(e.shape)
+    print(f[0].shape, f[1].shape, f[2].shape, f[3].shape)

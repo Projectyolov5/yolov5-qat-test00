@@ -161,20 +161,25 @@ def measure_inference_latency(model,
                               num_samples=100,
                               num_warmups=10):
 
-    model.to(device)
-    model.eval()
+    model1 = model[0]
+    model2 = model[1]
+
+    model1.to(device)
+    model1.eval()
+    model2.to(device)
+    model2.eval()
 
     x = torch.rand(size=input_size).to(device)
 
     with torch.no_grad():
         for _ in range(num_warmups):
-            _ = model(x)
+            _ = model2(model1(x))
     torch.cuda.synchronize()
 
     with torch.no_grad():
         start_time = time.time()
         for _ in range(num_samples):
-            _ = model(x)
+            _ = model2(model1(x))
             torch.cuda.synchronize()
         end_time = time.time()
     elapsed_time = end_time - start_time
@@ -247,27 +252,27 @@ class QuantizedResNet18(nn.Module):
         x = self.dequant(x)
         return x
 
-class QuantizedNet(nn.Module):
-    def __init__(self, model_fp32):
-        super(QuantizedNet, self).__init__()
-        # QuantStub converts tensors from floating point to quantized.
-        # This will only be used for inputs.
-        self.quant = torch.quantization.QuantStub()
-        # FP32 model
-        self.model_fp32 = model_fp32
-        # DeQuantStub converts tensors from quantized to floating point.
-        # This will only be used for outputs.
-        self.dequant = torch.quantization.DeQuantStub()
+# class QuantizedNet(nn.Module):
+#     def __init__(self, model_fp32):
+#         super(QuantizedNet, self).__init__()
+#         # QuantStub converts tensors from floating point to quantized.
+#         # This will only be used for inputs.
+#         self.quant = torch.quantization.QuantStub()
+#         # FP32 model
+#         self.model_fp32 = model_fp32
+#         # DeQuantStub converts tensors from quantized to floating point.
+#         # This will only be used for outputs.
+#         self.dequant = torch.quantization.DeQuantStub()
 
-    def forward(self, x):
-        # manually specify where tensors will be converted from floating
-        # point to quantized in the quantized model
-        x = self.quant(x)
-        x = self.model_fp32(x)
-        # manually specify where tensors will be converted from quantized
-        # to floating point in the quantized model
-        x = self.dequant(x)
-        return x
+#     def forward(self, x):
+#         # manually specify where tensors will be converted from floating
+#         # point to quantized in the quantized model
+#         x = self.quant(x)
+#         x = self.model_fp32(x)
+#         # manually specify where tensors will be converted from quantized
+#         # to floating point in the quantized model
+#         x = self.dequant(x)
+#         return x
 
 def model_equivalence(model_1, model_2, device, rtol=1e-05, atol=1e-08, num_tests=100, input_size=(1,3,32,32)):
 
@@ -365,7 +370,7 @@ def main():
     # quantized_model = QuantizedResNet18(model_fp32=model)
     # Select quantization schemes from 
     # https://pytorch.org/docs/stable/quantization-support.html
-    quantization_config = torch.quantization.get_default_qconfig("fbgemm")
+    quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
     # Custom quantization configurations
     # quantization_config = torch.quantization.default_qconfig
     # quantization_config = torch.quantization.QConfig(activation=torch.quantization.MinMaxObserver.with_args(dtype=torch.quint8), weight=torch.quantization.MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric))
@@ -389,7 +394,7 @@ def main():
     # quantized_model = torch.quantization.quantize_qat(model=quantized_model, run_fn=train_model, run_args=[train_loader, test_loader, cuda_device], mapping=None, inplace=False)
 
     quantized_model = torch.quantization.convert(quantized_model, inplace=True)
-
+    quantized_model.x_all.dtype = torch.quint8
     quantized_model.eval()
 
     # Print quantized model.
@@ -407,10 +412,10 @@ def main():
     print("FP32 evaluation accuracy: {:.3f}".format(fp32_eval_accuracy))
     print("INT8 evaluation accuracy: {:.3f}".format(int8_eval_accuracy))
 
-    fp32_cpu_inference_latency = measure_inference_latency(model=model, device=cpu_device, input_size=(1,3,32,32), num_samples=100)
-    int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=cpu_device, input_size=(1,3,32,32), num_samples=100)
-    int8_jit_cpu_inference_latency = measure_inference_latency(model=quantized_jit_model, device=cpu_device, input_size=(1,3,32,32), num_samples=100)
-    fp32_gpu_inference_latency = measure_inference_latency(model=model, device=cuda_device, input_size=(1,3,32,32), num_samples=100)
+    fp32_cpu_inference_latency = measure_inference_latency(model=model, device=cpu_device, input_size=(1,3,32,32), num_samples=10)
+    int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=cpu_device, input_size=(1,3,32,32), num_samples=10)
+    int8_jit_cpu_inference_latency = measure_inference_latency(model=quantized_jit_model, device=cpu_device, input_size=(1,3,32,32), num_samples=10)
+    fp32_gpu_inference_latency = measure_inference_latency(model=model, device=cuda_device, input_size=(1,3,32,32), num_samples=10)
     
     print("FP32 CPU Inference Latency: {:.2f} ms / sample".format(fp32_cpu_inference_latency * 1000))
     print("FP32 CUDA Inference Latency: {:.2f} ms / sample".format(fp32_gpu_inference_latency * 1000))
