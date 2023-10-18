@@ -582,7 +582,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     quantized_model.eval()
     quantized_model.to(cpu_device)
 
-    # model.train()
+    model.train()
     # The model has to be switched to training mode before any layer fusion.
     # Otherwise the quantization aware training will not work correctly.
     # quantized_model.train()
