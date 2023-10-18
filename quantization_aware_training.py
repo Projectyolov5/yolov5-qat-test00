@@ -251,28 +251,28 @@ class QuantizedResNet18(nn.Module):
         # to floating point in the quantized model
         x = self.dequant(x)
         return x
-
-# class QuantizedNet(nn.Module):
-#     def __init__(self, model_fp32):
-#         super(QuantizedNet, self).__init__()
-#         # QuantStub converts tensors from floating point to quantized.
-#         # This will only be used for inputs.
-#         self.quant = torch.quantization.QuantStub()
-#         # FP32 model
-#         self.model_fp32 = model_fp32
-#         # DeQuantStub converts tensors from quantized to floating point.
-#         # This will only be used for outputs.
-#         self.dequant = torch.quantization.DeQuantStub()
-
-#     def forward(self, x):
-#         # manually specify where tensors will be converted from floating
-#         # point to quantized in the quantized model
-#         x = self.quant(x)
-#         x = self.model_fp32(x)
-#         # manually specify where tensors will be converted from quantized
-#         # to floating point in the quantized model
-#         x = self.dequant(x)
-#         return x
+        
+class QuantizedNet(nn.Module):
+   def __init__(self, model_fp32):
+         super(QuantizedNet, self).__init__()
+         # QuantStub converts tensors from floating point to quantized.
+         # This will only be used for inputs.
+         self.quant = torch.quantization.QuantStub()
+         # FP32 model
+         self.model_fp32 = model_fp32
+         # DeQuantStub converts tensors from quantized to floating point.
+         # This will only be used for outputs.
+         self.dequant = torch.quantization.DeQuantStub()
+         
+         def forward(self, x):
+         # manually specify where tensors will be converted from floating
+         # point to quantized in the quantized model 
+          x = self.quant(x)
+          x = self.model_fp32(x)
+         # manually specify where tensors will be converted from quantized
+         # to floating point in the quantized model
+         x = self.dequant(x)
+         return x
 
 def model_equivalence(model_1, model_2, device, rtol=1e-05, atol=1e-08, num_tests=100, input_size=(1,3,32,32)):
 
