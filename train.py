@@ -538,11 +538,11 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
         model.load_state_dict(csd, strict=False)  # load
         LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
-    
+   
     # It should be pretrained
     # else:
     #     model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-    
+   
     amp = check_amp(model)  # check AMP
 
     # Freeze
@@ -555,7 +555,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     model.to(cpu_device)
 
-    
+   
     # fused_model = deepcopy(model)
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
@@ -567,7 +567,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         csd = intersect_dicts(csd, quantized_model.state_dict(), exclude=exclude)  # intersect
         quantized_model.load_state_dict(csd, strict=False)  # load
         LOGGER.info(f'Transferred {len(csd)}/{len(quantized_model.state_dict())} items from {weights}')  # report
-    
+   
     # amp = check_amp(quantized_model)  # check AMP
     # amp = True
     # # Freeze
@@ -585,7 +585,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     model.train()
     # The model has to be switched to training mode before any layer fusion.
     # Otherwise the quantization aware training will not work correctly.
-    # quantized_model.train()
+    quantized_model.train()
 
     # # Fuse the model in place rather manually.
     # fused_model = torch.quantization.fuse_modules(fused_model, [["conv", "bn", "act"]], inplace=True)
@@ -602,7 +602,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     # quantized_model = QuantizedNet(fused_model)
     quantization_config = torch.quantization.get_default_qat_qconfig("fbgemm")
-    # quantization_config = torch.quantization.get_default_qconfig("fbgemm")
+    quantization_config = torch.quantization.get_default_qconfig("fbgemm")
     quantized_model.model.qconfig = quantization_config
     quantized_model.quant.qconfig = quantization_config
     quantized_model.dequant.qconfig = quantization_config
@@ -668,7 +668,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
 
     # EMA
     ema = ModelEMA(quantized_model) if RANK in {-1, 0} else None
-    
+   
     # print(quantized_model.model)
 
     # Resume
@@ -812,7 +812,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')  # progress bar
         optimizer.zero_grad()
-        '''
+       
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
@@ -870,7 +870,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                 if callbacks.stop_training:
                     return
             # end batch ------------------------------------------------------------------------------------------------
-        '''
+       
 
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
@@ -960,7 +960,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     # save_torchscript_model(model=quantized_model, model_dir=model_dir, model_filename=quantized_model_filename)
     # torch.jit.save(torch.jit.script(quantized_model), quantized_model_filepath)
     # quantized_jit_model = load_torchscript_model(model_filepath=quantized_model_filepath, device=cpu_device)
-    
+   
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     # _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
     '''
@@ -976,9 +976,9 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 plots=False,
                                 callbacks=callbacks,
                                 compute_loss=compute_loss)
-    
+   
     fi_fp32 = fitness(np.array(fp32_results).reshape(1, -1))
-    
+   
     print("INT8 Validation")
     int8_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
@@ -991,23 +991,23 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
                                 plots=False,
                                 callbacks=callbacks,
                                 compute_loss=compute_loss)
-    
+   
     fi_int8 = fitness(np.array(int8_results).reshape(1, -1))
-    
+   
     print("FP32 evaluation", fi_fp32)
     print("INT8 evaluation", fi_int8)
     # print("FP32 evaluation mAP_0.5:95 : {:.3f}".format(fp32_eval_accuracy))
     # print("INT8 evaluation mAP_0.5:95 : {:.3f}".format(int8_eval_accuracy))
     '''
 
-    fp32_cpu_inference_latency = measure_inference_latency(model=model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
-    int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
-    fp32_gpu_inference_latency = measure_inference_latency(model=model, device=device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
+    #fp32_cpu_inference_latency = measure_inference_latency(model=model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
+    #int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
+    #fp32_gpu_inference_latency = measure_inference_latency(model=model, device=device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
     # int8_jit_cpu_inference_latency = measure_inference_latency(model=quantized_jit_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
-    
-    print("FP32 CPU Inference Latency: {:.2f} ms / sample".format(fp32_cpu_inference_latency * 1000))
-    print("FP32 CUDA Inference Latency: {:.2f} ms / sample".format(fp32_gpu_inference_latency * 1000))
-    print("INT8 CPU Inference Latency: {:.2f} ms / sample".format(int8_cpu_inference_latency * 1000))
+   
+    #print("FP32 CPU Inference Latency: {:.2f} ms / sample".format(fp32_cpu_inference_latency * 1000))
+    #print("FP32 CUDA Inference Latency: {:.2f} ms / sample".format(fp32_gpu_inference_latency * 1000))
+    #print("INT8 CPU Inference Latency: {:.2f} ms / sample".format(int8_cpu_inference_latency * 1000))
     # print("INT8 JIT CPU Inference Latency: {:.2f} ms / sample".format(int8_jit_cpu_inference_latency * 1000))
 
 
