@@ -619,7 +619,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print("Training QAT Model...")
     quantized_model.to(device)
 
-    # print(quantized_model)
+    print(quantized_model)
 
     # Image size
     gs = max(int(quantized_model.stride.max()), 32)  # grid size (max stride)
@@ -963,13 +963,14 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
    
     # _, fp32_eval_accuracy = evaluate_model(model=model, test_loader=test_loader, device=cpu_device, criterion=None)
     # _, int8_eval_accuracy = evaluate_model(model=quantized_jit_model, test_loader=test_loader, device=cpu_device, criterion=None)
-    '''
+    
     print("FP32 Validation")
+    model = model.to('cuda:0')  # Move the model to the GPU (cuda:0)
     fp32_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
                                 imgsz=imgsz,
                                 model=model,
-                                device=cpu_device,
+                                device='cuda:0',
                                 single_cls=single_cls,
                                 dataloader=val_loader,
                                 save_dir=save_dir,
@@ -979,12 +980,14 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
    
     fi_fp32 = fitness(np.array(fp32_results).reshape(1, -1))
    
+if 'quantized_jit_model' in locals():
     print("INT8 Validation")
+    quantized_jit_model = quantized_jit_model.to('cuda:0')  # Move the quantized model to the GPU (cuda:0)
     int8_results, _, _ = val.run(data_dict,
                                 batch_size=batch_size // WORLD_SIZE * 2,
                                 imgsz=imgsz,
                                 model=quantized_jit_model,
-                                device=cpu_device,
+                                device='cuda:0',
                                 single_cls=single_cls,
                                 dataloader=val_loader,
                                 save_dir=save_dir,
@@ -998,7 +1001,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print("INT8 evaluation", fi_int8)
     # print("FP32 evaluation mAP_0.5:95 : {:.3f}".format(fp32_eval_accuracy))
     # print("INT8 evaluation mAP_0.5:95 : {:.3f}".format(int8_eval_accuracy))
-    '''
+    
 
     #fp32_cpu_inference_latency = measure_inference_latency(model=model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
     #int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=cpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
@@ -1038,7 +1041,7 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     #     callbacks.run('on_train_end', last, best, plots, epoch, results)
 
     torch.cuda.empty_cache()
-    return results
+    # return results
 
 
 def parse_opt(known=False):
