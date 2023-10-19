@@ -1000,7 +1000,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
     print("INT8 evaluation", fi_int8)
     # print("FP32 evaluation mAP_0.5:95 : {:.3f}".format(fp32_eval_accuracy))
     # print("INT8 evaluation mAP_0.5:95 : {:.3f}".format(int8_eval_accuracy))
-    cha
 
     #fp32_cpu_inference_latency = measure_inference_latency(model=model, device=gpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
     #int8_cpu_inference_latency = measure_inference_latency(model=quantized_model, device=gpu_device, input_size=(1,3,opt.imgsz,opt.imgsz), num_samples=100)
