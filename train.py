@@ -980,7 +980,6 @@ def qat_train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp di
    
     fi_fp32 = fitness(np.array(fp32_results).reshape(1, -1))
    
-if 'quantized_jit_model' in locals():
     print("INT8 Validation")
     quantized_jit_model = quantized_jit_model.to('cuda:0')  # Move the quantized model to the GPU (cuda:0)
     int8_results, _, _ = val.run(data_dict,
@@ -1041,7 +1040,7 @@ if 'quantized_jit_model' in locals():
     #     callbacks.run('on_train_end', last, best, plots, epoch, results)
 
     torch.cuda.empty_cache()
-    # return results
+    return results
 
 
 def parse_opt(known=False):
